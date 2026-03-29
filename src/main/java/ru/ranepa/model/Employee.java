@@ -1,23 +1,21 @@
 package ru.ranepa.model;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public class Employee {
     private Long id;
     private String name;
     private String position;
-    private BigDecimal salary;
+    private double salary;
     private LocalDate hireDate;
-    //alt+insert
-    public Employee(String name, String position, LocalDate hireDate, double salary) {
-        this.name = name;
-        this.position = position;
-        this.salary = BigDecimal.valueOf(salary);
-        this.hireDate = hireDate;
 
+    public Employee(String name, String position, LocalDate hireDate, double salary) {
+        setName(name);
+        setPosition(position);
+        setHireDate(hireDate);
+        setSalary(salary);
     }
-//alt+ins -> tostring
+
     @Override
     public String toString() {
         return "Employee{" +
@@ -34,6 +32,9 @@ public class Employee {
     }
 
     public void setId(Long id) {
+        if (id == null || id <= 0) {
+            throw new IllegalArgumentException("Id must be positive");
+        }
         this.id = id;
     }
 
@@ -42,6 +43,9 @@ public class Employee {
     }
 
     public void setName(String name) {
+        if (name == null || name.isBlank()) {
+            throw new IllegalArgumentException("Name cannot be empty");
+        }
         this.name = name;
     }
 
@@ -50,14 +54,20 @@ public class Employee {
     }
 
     public void setPosition(String position) {
+        if (position == null || position.isBlank()) {
+            throw new IllegalArgumentException("Position cannot be empty");
+        }
         this.position = position;
     }
 
-    public BigDecimal getSalary() {
+    public double getSalary() {
         return salary;
     }
 
-    public void setSalary(BigDecimal salary) {
+    public void setSalary(double salary) {
+        if (salary < 0) {
+            throw new IllegalArgumentException("Salary cannot be negative");
+        }
         this.salary = salary;
     }
 
@@ -66,9 +76,9 @@ public class Employee {
     }
 
     public void setHireDate(LocalDate hireDate) {
+        if (hireDate == null) {
+            throw new IllegalArgumentException("Hire date cannot be null");
+        }
         this.hireDate = hireDate;
     }
 }
-
-
-

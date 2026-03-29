@@ -2,34 +2,37 @@ package ru.ranepa.repository;
 
 import ru.ranepa.model.Employee;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 public class EmployeeRepositoryImpl implements EmployeeRepository {
 
-    private Map<Long, Employee> employees = new HashMap<>();
-    private static Long nextId = 1L;
+    private final Map<Long, Employee> employees = new HashMap<>();
+    private Long nextId = 1L;
 
     @Override
-    public String save(Employee employee) {
-        employee.setId(nextId++);
-        employees.put(employee.getId(), employee);
-        return "Employee " + employee.getId() + " was saved";
+    public Employee save(Employee employee) {
+        employee.setId(nextId);
+        employees.put(nextId, employee);
+        nextId++;
+        return employee;
     }
 
     @Override
     public Optional<Employee> findById(Long id) {
-        return Optional.of(employees.get(id));
+        return Optional.ofNullable(employees.get(id));
     }
 
     @Override
-    public Iterable<Employee> findAll() {
-        return null;
+    public List<Employee> findAll() {
+        return new ArrayList<>(employees.values());
     }
 
     @Override
-    public String delete(Long id) {
-        return "";
+    public boolean delete(Long id) {
+        return employees.remove(id) != null;
     }
 }
