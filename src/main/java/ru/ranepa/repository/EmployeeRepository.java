@@ -10,4 +10,5 @@ public interface EmployeeRepository {
     Optional<Employee> findById(Long id);
     List<Employee> findAll();
     boolean delete(Long id);
+    void saveToFile(String filename);
 }

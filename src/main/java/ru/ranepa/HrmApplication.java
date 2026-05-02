@@ -6,71 +6,69 @@ import ru.ranepa.service.EmployeeService;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
+import java.util.List;
 import java.util.Scanner;
 
 public class HrmApplication {
+    private static final String EMPLOYEES_FILE_NAME = "employees.csv";
+
+    private static final Scanner scanner = new Scanner(System.in);
+    private static final EmployeeRepositoryImpl repository = new EmployeeRepositoryImpl();
+    private static final EmployeeService employeeService = new EmployeeService(repository);
 
     public static void main(String[] args) {
-        Scanner scanner = new Scanner(System.in);
-        EmployeeService employeeService = new EmployeeService(new EmployeeRepositoryImpl());
-
         while (true) {
-            System.out.println("\n=== HRM System Menu ===");
-            System.out.println("1. Show all employees");
-            System.out.println("2. Add employee");
-            System.out.println("3. Delete employee by ID");
-            System.out.println("4. Find employee by ID");
-            System.out.println("5. Show statistics");
-            System.out.println("0. Exit");
-            System.out.print("Choose an option: ");
-
+            printMenu();
             String choice = scanner.nextLine();
 
             switch (choice) {
                 case "1":
-                    showAllEmployees(employeeService);
+                    showAllEmployees();
                     break;
-
                 case "2":
-                    addEmployee(scanner, employeeService);
+                    addEmployee();
                     break;
-
                 case "3":
-                    deleteEmployee(scanner, employeeService);
+                    deleteEmployee();
                     break;
-
                 case "4":
-                    findEmployeeById(scanner, employeeService);
+                    findEmployeeById();
                     break;
-
                 case "5":
-                    showStatistics(employeeService);
+                    showStatistics();
                     break;
-
                 case "0":
-                    employeeService.saveEmployeesToFile("employees.csv");
-                    System.out.println("Employees saved to employees.csv");
-                    System.out.println("Program finished.");
+                    exitApplication();
                     return;
-
                 default:
                     System.out.println("Invalid option. Try again.");
             }
         }
     }
 
-    private static void showAllEmployees(EmployeeService employeeService) {
-        if (employeeService.getAllEmployees().isEmpty()) {
-            System.out.println("Employee list is empty.");
+    private static void printMenu() {
+        System.out.println("\n=== HRM System Menu ===");
+        System.out.println("1. Show all employees");
+        System.out.println("2. Add employee");
+        System.out.println("3. Delete employee by ID");
+        System.out.println("4. Find employee by ID");
+        System.out.println("5. Show statistics");
+        System.out.println("0. Exit");
+        System.out.print("Choose an option: ");
+    }
+
+    private static void showAllEmployees() {
+        List<Employee> employees = repository.findAll();
+
+        if (employees.isEmpty()) {
+            System.out.println("No employees found");
             return;
         }
 
-        for (Employee employee : employeeService.getAllEmployees()) {
-            System.out.println(employee);
-        }
+        employees.forEach(System.out::println);
     }
 
-    private static void addEmployee(Scanner scanner, EmployeeService employeeService) {
+    private static void addEmployee() {
         try {
             System.out.print("Enter name: ");
             String name = scanner.nextLine();
@@ -97,7 +95,7 @@ public class HrmApplication {
         }
     }
 
-    private static void deleteEmployee(Scanner scanner, EmployeeService employeeService) {
+    private static void deleteEmployee() {
         try {
             System.out.print("Enter employee ID to delete: ");
             Long id = Long.parseLong(scanner.nextLine());
@@ -106,15 +104,16 @@ public class HrmApplication {
 
             if (deleted) {
                 System.out.println("Employee deleted successfully.");
-            } else {
-                System.out.println("Employee not found.");
+                return;
             }
+
+            System.out.println("Employee not found.");
         } catch (NumberFormatException e) {
             System.out.println("Invalid ID format.");
         }
     }
 
-    private static void findEmployeeById(Scanner scanner, EmployeeService employeeService) {
+    private static void findEmployeeById() {
         try {
             System.out.print("Enter employee ID to find: ");
             Long id = Long.parseLong(scanner.nextLine());
@@ -129,7 +128,7 @@ public class HrmApplication {
         }
     }
 
-    private static void showStatistics(EmployeeService employeeService) {
+    private static void showStatistics() {
         double averageSalary = employeeService.calculateAverageSalary();
         System.out.println("Average salary: " + averageSalary);
 
@@ -138,5 +137,11 @@ public class HrmApplication {
                         employee -> System.out.println("Highest paid employee: " + employee),
                         () -> System.out.println("No employees in the system.")
                 );
+    }
+
+    private static void exitApplication() {
+        repository.saveToFile(EMPLOYEES_FILE_NAME);
+        System.out.println("Employees saved to " + EMPLOYEES_FILE_NAME);
+        System.out.println("Program finished.");
     }
 }
