@@ -1,16 +1,22 @@
 package ru.ranepa.service;
 
+import org.springframework.stereotype.Service;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import ru.ranepa.model.Employee;
 import ru.ranepa.repository.EmployeeRepository;
+import ru.ranepa.exception.EmployeeNotFoundException;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
 
+@Service
 public class EmployeeService {
+
+    private static final int SALARY_SCALE = 2;
 
     private final EmployeeRepository employeeRepository;
 
@@ -18,11 +24,11 @@ public class EmployeeService {
         this.employeeRepository = employeeRepository;
     }
 
-    public Employee addEmployee(Employee employee) {
+    public Employee createEmployee(Employee employee) {
         return employeeRepository.save(employee);
     }
 
-    public List<Employee> getAllEmployees() {
+    public List<Employee> findAllEmployees() {
         return employeeRepository.findAll();
     }
 
@@ -30,29 +36,12 @@ public class EmployeeService {
         return employeeRepository.findById(id);
     }
 
-    public boolean deleteEmployee(Long id) {
-        return employeeRepository.delete(id);
-    }
-
-    public double calculateAverageSalary() {
-        List<Employee> employees = employeeRepository.findAll();
-
-        if (employees.isEmpty()) {
-            return 0.0;
+    public void deleteEmployee(Long id) {
+        if (!employeeRepository.existsById(id)) {
+            throw new EmployeeNotFoundException(id);
         }
 
-        double sum = 0.0;
-
-        for (Employee employee : employees) {
-            sum += employee.getSalary();
-        }
-
-        return sum / employees.size();
-    }
-
-    public Optional<Employee> findHighestPaidEmployee() {
-        return employeeRepository.findAll().stream()
-                .max(Comparator.comparingDouble(Employee::getSalary));
+        employeeRepository.deleteById(id);
     }
 
     public List<Employee> findEmployeesByPosition(String position) {
@@ -60,39 +49,45 @@ public class EmployeeService {
             throw new IllegalArgumentException("Position cannot be empty");
         }
 
-        return employeeRepository.findAll().stream()
-                .filter(employee -> employee.getPosition().equalsIgnoreCase(position))
-                .toList();
+        return employeeRepository.findByPosition(position);
     }
 
-    public List<Employee> getEmployeesSortedByName() {
-        return employeeRepository.findAll().stream()
-                .sorted(Comparator.comparing(Employee::getName))
-                .toList();
-    }
+    public BigDecimal calculateAverageSalary() {
+        List<Employee> employees = employeeRepository.findAll();
 
-    public List<Employee> getEmployeesSortedByHireDate() {
-        return employeeRepository.findAll().stream()
-                .sorted(Comparator.comparing(Employee::getHireDate))
-                .toList();
-    }
-    public void saveEmployeesToFile(String fileName) {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(fileName))) {
-            writer.write("id,name,position,salary,hireDate");
-            writer.newLine();
-
-            for (Employee employee : employeeRepository.findAll()) {
-                writer.write(
-                        employee.getId() + "," +
-                                employee.getName() + "," +
-                                employee.getPosition() + "," +
-                                employee.getSalary() + "," +
-                                employee.getHireDate()
-                );
-                writer.newLine();
-            }
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to save employees to file", e);
+        if (employees.isEmpty()) {
+            return BigDecimal.ZERO;
         }
+
+        BigDecimal totalSalary = employees.stream()
+                .map(Employee::getSalary)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        return totalSalary.divide(
+                BigDecimal.valueOf(employees.size()),
+                SALARY_SCALE,
+                RoundingMode.HALF_UP
+        );
+    }
+
+    public Optional<Employee> findHighestPaidEmployee() {
+        return employeeRepository.findAll().stream()
+                .max(Comparator.comparing(Employee::getSalary));
+    }
+
+    public Page<Employee> findAllEmployees(Pageable pageable) {
+        return employeeRepository.findAll(pageable);
+    }
+
+    public Employee updateEmployee(Long id, Employee updatedEmployee) {
+        Employee employee = employeeRepository.findById(id)
+                .orElseThrow(() -> new EmployeeNotFoundException(id));
+
+        employee.setName(updatedEmployee.getName());
+        employee.setPosition(updatedEmployee.getPosition());
+        employee.setSalary(updatedEmployee.getSalary());
+        employee.setHireDate(updatedEmployee.getHireDate());
+
+        return employeeRepository.save(employee);
     }
 }

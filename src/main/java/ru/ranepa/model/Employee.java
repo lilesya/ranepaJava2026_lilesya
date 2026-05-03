@@ -1,45 +1,66 @@
 package ru.ranepa.model;
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Table;
+
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
+@Entity
+@Table(name = "employees")
 public class Employee {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     private String name;
     private String position;
-    private double salary;
+    private BigDecimal salary;
     private LocalDate hireDate;
+    private LocalDate createdAt;
 
-    public Employee(String name, String position, LocalDate hireDate, double salary) {
-        setName(name);
-        setPosition(position);
-        setHireDate(hireDate);
-        setSalary(salary);
+    protected Employee() {
     }
 
-    @Override
-    public String toString() {
-        return "Employee{" +
-                "id=" + id +
-                ", name='" + name + '\'' +
-                ", position='" + position + '\'' +
-                ", salary=" + salary +
-                ", hireDate=" + hireDate +
-                '}';
+    public Employee(String name, String position, BigDecimal salary, LocalDate hireDate) {
+        setName(name);
+        setPosition(position);
+        setSalary(salary);
+        setHireDate(hireDate);
+    }
+
+    @PrePersist
+    private void prePersist() {
+        createdAt = LocalDate.now();
     }
 
     public Long getId() {
         return id;
     }
 
-    public void setId(Long id) {
-        if (id == null || id <= 0) {
-            throw new IllegalArgumentException("Id must be positive");
-        }
-        this.id = id;
-    }
-
     public String getName() {
         return name;
+    }
+
+    public String getPosition() {
+        return position;
+    }
+
+    public BigDecimal getSalary() {
+        return salary;
+    }
+
+    public LocalDate getHireDate() {
+        return hireDate;
+    }
+
+    public LocalDate getCreatedAt() {
+        return createdAt;
     }
 
     public void setName(String name) {
@@ -49,10 +70,6 @@ public class Employee {
         this.name = name;
     }
 
-    public String getPosition() {
-        return position;
-    }
-
     public void setPosition(String position) {
         if (position == null || position.isBlank()) {
             throw new IllegalArgumentException("Position cannot be empty");
@@ -60,19 +77,11 @@ public class Employee {
         this.position = position;
     }
 
-    public double getSalary() {
-        return salary;
-    }
-
-    public void setSalary(double salary) {
-        if (salary < 0) {
+    public void setSalary(BigDecimal salary) {
+        if (salary == null || salary.signum() < 0) {
             throw new IllegalArgumentException("Salary cannot be negative");
         }
         this.salary = salary;
-    }
-
-    public LocalDate getHireDate() {
-        return hireDate;
     }
 
     public void setHireDate(LocalDate hireDate) {
